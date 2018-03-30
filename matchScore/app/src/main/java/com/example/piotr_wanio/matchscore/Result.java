@@ -1,5 +1,7 @@
 package com.example.piotr_wanio.matchscore;
 
+import java.util.ArrayList;
+
 /**
  * Created by Piotr_Wanio on 26.03.2018.
  */
@@ -10,8 +12,7 @@ public class Result {
     private int goalsA;
     private int goalsB;
 
-    public static final Result[] results;
-
+/*
     static {
         results = new Result[]{
                 new Result(new Team("Arsenal", "ARS", 0, 0, 0, 0), new Team("Real Madrit", "RM", 0, 0, 0, 0), 5, 2),
@@ -19,8 +20,8 @@ public class Result {
                 new Result(new Team("Arsenal", "ARS", 0, 0, 0, 0), new Team("Real Madrit", "RM", 0, 0, 0, 0), 4, 4)
         };
     }
-
-    private Result(Team teamA, Team teamB, int goalsA, int goalsB){
+*/
+    public Result(Team teamA, Team teamB, int goalsA, int goalsB){
         this.teamA = teamA;
         this.teamB = teamB;
         this.goalsA = goalsA;
