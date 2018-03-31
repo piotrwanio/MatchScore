@@ -33,4 +33,5 @@ public class ScoresActivity extends AppCompatActivity {
         listResults.setAdapter(listAdapter);
     }
 
+
 }
