@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">matchScore</string>
     <string name="scores">Scores</string>
+    <string-array name="titles">
+        <item>Results</item>
+        <item>Tabel</item>
+    </string-array>
 </resources>
