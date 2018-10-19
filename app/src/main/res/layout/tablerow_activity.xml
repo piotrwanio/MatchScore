@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/results_list_view"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="7dp"
+    android:contentDescription="@string/app_name">
+
+    <TextView
+        android:id="@+id/tablerow_item_place"
+        android:layout_width="50sp"
+        android:layout_height="40sp"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tablerow_item_team"
+        android:layout_width="200sp"
+        android:layout_height="40sp"
+        android:paddingTop="5dp"
+        android:paddingLeft="20dp"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tablerow_item_points"
+        android:layout_width="50sp"
+        android:layout_height="40sp"
+        android:paddingTop="5dp"
+        android:paddingLeft="20dp"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tablerow_item_goals"
+        android:layout_width="50sp"
+        android:layout_height="40sp"
+        android:textSize="16sp"
+        android:paddingLeft="20dp"
+        android:textStyle="bold" />
+
+</LinearLayout>

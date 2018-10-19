@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">matchScore</string>
+    <string name="scores">Scores</string>
+    <string name="open_drawer">Open drawer</string>
+    <string name="close_drawer">Close drawer</string>
+    <string name="action_share">Share</string>
+    <string name="action_settings">Settings</string>
+    <string-array name="titles">
+        <item>Results</item>
+        <item>Table</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
