@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,8 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 public class ResultsFragment extends Fragment {
 
@@ -32,12 +35,40 @@ public class ResultsFragment extends Fragment {
                 matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(getActivity());
             }
 
+            db = matchScoreDatabaseHelper.getReadableDatabase();
+
             String[] from = {"TEAM_A", "GOALS_A", "GOALS_B", "TEAM_B"};
             int[] to = {R.id.listview_item_teamA, R.id.listview_item_goals_teamA,
                     R.id.listview_item_goals_teamB, R.id.listview_item_teamB};
 
-            db = matchScoreDatabaseHelper.getReadableDatabase();
-            cursor = db.query("RESULT", new String[]{"_id", "TEAM_A", "GOALS_A", "GOALS_B", "TEAM_B"}, null, null, null, null, null);
+
+            Bundle bundle = getArguments();
+            int leagueId = bundle.getInt("index", 0);
+            String league = "";
+            SimpleService simpleService = new SimpleService(this.getActivity());
+
+            switch (leagueId)
+            {
+                case 1:
+                    try {
+                        simpleService.getResultsResponse(db, 2021);
+                    }
+                    catch (IOException e) {
+                        Log.d("IOException", "IOEXCEPTION");
+                    }
+                    league = "ResultsEngland";
+                    break;
+                case 2:
+                    try {
+                        simpleService.getResultsResponse(db, 2002);
+                    }
+                    catch (IOException e) {
+                        Log.d("IOException", "IOEXCEPTION");
+                    }
+                    league = "ResultsGermany";
+            }
+
+            cursor = db.query(league, new String[]{"_id", "TEAM_A", "GOALS_A", "GOALS_B", "TEAM_B"}, null, null, null, null, null);
             CursorAdapter listAdapter = new SimpleCursorAdapter(getActivity(),
                     R.layout.listview_activity,
                     cursor,
