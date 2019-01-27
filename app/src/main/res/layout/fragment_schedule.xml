@@ -1,53 +1,30 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/relativeLayout2"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.piotr_wanio.matchscore.ResultsFragment">
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/scores"
-        android:textSize="30sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <ListView
-        android:id="@+id/scoreslist"
-        style="@android:style/Widget.Material.ListView"
-        android:layout_width="wrap_content"
-        android:layout_height="451dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tableRow" />
+    tools:context="com.example.piotr_wanio.matchscore.ResultsFragment"
+    android:id="@+id/relativeLayout">
 
     <TableRow
         android:id="@+id/tableRow"
         android:layout_width="378dp"
         android:layout_height="22dp"
-        android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView2">
 
         <TextView
             android:id="@+id/textView14"
-            android:layout_width="47dp"
-            android:layout_height="wrap_content"
+            android:layout_width="44dp"
+            android:layout_height="22dp"
             android:text="Kolejka"
             android:textAlignment="center"
             android:textSize="8sp" />
 
         <TextView
             android:id="@+id/textView15"
-            android:layout_width="124dp"
+            android:layout_width="95dp"
             android:layout_height="match_parent"
             android:text="Gospodarz"
             android:textAlignment="center" />
@@ -61,10 +38,37 @@
 
         <TextView
             android:id="@+id/textView17"
-            android:layout_width="126dp"
+            android:layout_width="90dp"
             android:layout_height="match_parent"
             android:text="Gość"
             android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="57dp"
+            android:layout_height="match_parent"
+            android:text="Śledź"
+            android:textAlignment="center" />
     </TableRow>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="43dp"
+        android:text="@string/schedule"
+        android:textSize="30sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ListView
+        android:id="@+id/scoreslist"
+        style="@android:style/Widget.Material.ListView"
+        android:layout_width="match_parent"
+        android:layout_height="443dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tableRow" />
 
 </android.support.constraint.ConstraintLayout>

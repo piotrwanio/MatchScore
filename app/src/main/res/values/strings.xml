@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">matchScore</string>
-    <string name="scores">Scores</string>
+    <string name="scores">Wyniki</string>
+    <string name="schedule">Terminarz</string>
+    <string name="my_matches">Śledzone mecze</string>
     <string name="open_drawer">Open drawer</string>
     <string name="close_drawer">Close drawer</string>
     <string name="action_share">Share</string>
@@ -8,6 +10,8 @@
     <string-array name="menu_options">
         <item>Liga angielska</item>
         <item>Liga niemiecka</item>
+        <item>Liga hiszpańska</item>
+        <item>Śledzone mecze</item>
     </string-array>
 
     <!-- TODO: Remove or change this placeholder text -->

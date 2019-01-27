@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/results_list_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:contentDescription="@string/app_name">
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="43dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/row_player_shirt"
+            android:layout_width="43dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:text="10"
+            android:textAlignment="center"
+            android:textSize="10sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/row_player_name"
+            android:layout_width="89dp"
+            android:layout_height="33dp"
+            android:text="Leo Messi"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/row_player_position"
+            android:layout_width="94dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="0dp"
+            android:padding="10dp"
+            android:text="Napastnik"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/row_player_nationality"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:paddingLeft="0dp"
+            android:paddingTop="0dp"
+            android:text="Argentyna"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_teamA"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_teamA" />
+
+        <TextView
+            android:id="@+id/row_player_birth"
+            android:layout_width="70dp"
+            android:layout_height="43dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:paddingLeft="0dp"
+            android:paddingTop="0dp"
+            android:text="10.10.1990"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_teamA"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_teamA" />
+
+    </TableRow>
+
+</android.support.constraint.ConstraintLayout>

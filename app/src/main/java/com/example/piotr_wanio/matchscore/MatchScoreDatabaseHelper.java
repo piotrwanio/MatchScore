@@ -52,27 +52,24 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
                 + "GOALS_LOOSED INTEGER, "
                 + "IMAGE_RESOURCE TEXT);");
 
-        db.execSQL("CREATE TABLE Team (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        db.execSQL("CREATE TABLE StandingsSpain (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "ID INTEGER, "
                 + "NAME TEXT, "
                 + "SHORTNAME TEXT, "
                 + "POINTS INTEGER, "
+                + "GOALS_SCORED INTEGER, "
+                + "GOALS_LOOSED INTEGER, "
+                + "IMAGE_RESOURCE TEXT);");
+
+        db.execSQL("CREATE TABLE Team (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "NAME TEXT, "
+                + "SHORTNAME TEXT, "
+                + "FOUNDED INTEGER, "
                 + "ADDRESS TEXT, "
+                + "VENUE TEXT, "
                 + "WEBSITE TEXT, "
                 + "IMAGE_RESOURCE TEXT);");
-//        for (SimpleService.Team team : teamsList) {
-//            insertTeam(db,team.name.toString(),team.shortName.toString(),0,0,0,0);
-//        }
-//        insertTeam(db," FC","AFC",0,0,0,0);
-//        insertTeam(db,"Real Madrit CF","REA",0,0,0,0);
-//        insertTeam(db,"FC Barcelona","FCB",0,0,0,0);
-//        insertTeam(db,"Bayern Munchen","BAY",0,0,0,0);
-
-//        try {
-//            teamsList = service.run(db);
-//        }catch (Exception e){
-//            System.out.println("Service exception :/");
-//        }
 
         if(teamsList != null){
             for (Table team : teamsList.getStandings().get(0).getTable()) {
@@ -80,29 +77,28 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
-        db.execSQL("CREATE TABLE ResultsEngland (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "TEAM_A TEXT, "
-                + "TEAM_B TEXT, "
-                + "GOALS_A INTEGER, "
-                + "GOALS_B INTEGER);");
+        db.execSQL("CREATE TABLE Result (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "LEAGUE_ID INTEGER, "
+                + "LEAGUE_WEEK INTEGER,"
+                + "HOME_TEAM TEXT, "
+                + "AWAY_TEAM TEXT, "
+                + "STATUS TEXT, "
+                + "MATCH_DATE TEXT,"
+                + "LAST_UPDATED TEXT,"
+                + "IS_FOLLOWED TEXT, "
+                + "GOALS_HOME INTEGER, "
+                + "GOALS_AWAY INTEGER);");
 
-        db.execSQL("CREATE TABLE ResultsGermany (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "TEAM_A TEXT, "
-                + "TEAM_B TEXT, "
-                + "GOALS_A INTEGER, "
-                + "GOALS_B INTEGER);");
+        db.execSQL("CREATE TABLE Player (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "NAME TEXT, "
+                + "ID INTEGER,"
+                + "TEAM_ID INTEGER,"
+                + "POSITION TEXT, "
+                + "NATIONALITY TEXT, "
+                + "SHIRT_NUMBER INTEGER, "
+                + "BIRTH_DATE TEXT);");
 
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
-
-
-        db.execSQL("CREATE TABLE Teams (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "TEAM_NAME TEXT, "
-                + "ADDRESS TEXT, "
-                + "STADIUM TEXT, "
-                + "FOUNDED INTEGER, "
-                + "CLUB_COLORS TEXT);");
 
     }
 

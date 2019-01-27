@@ -85,17 +85,17 @@ public class TableFragment extends Fragment {
 //            matchScoreDatabaseHelper.onUpgrade(db,1,1);
 
             Bundle bundle = getArguments();
-            int leagueId = bundle.getInt("index", 0);
+            int leagueApiId = bundle.getInt("leagueId", 0);
             String league = "";
-            leagueApiId = 0;
-            switch (leagueId)
+            switch (leagueApiId)
             {
-                case 1:
-                    leagueApiId = 2021;
+                case 2021:
                     league = "StandingsEngland";
                     break;
-                case 2:
-                    leagueApiId = 2002;
+                case 2014:
+                    league = "StandingsSpain";
+                    break;
+                case 2002:
                     league = "StandingsGermany";
             }
             cursor = db.query(league, new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "POINTS", "GOALS_SCORED"}, null, null, null, null, null);

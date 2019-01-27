@@ -17,9 +17,11 @@ import com.example.piotr_wanio.matchscore.apiResponses.resultsResponse.Match;
 import com.example.piotr_wanio.matchscore.apiResponses.resultsResponse.ResultsResponse;
 import com.example.piotr_wanio.matchscore.apiResponses.standingsResponse.StandingsResponse;
 import com.example.piotr_wanio.matchscore.apiResponses.standingsResponse.Table;
+import com.example.piotr_wanio.matchscore.apiResponses.teamsResponse.Squad;
 import com.example.piotr_wanio.matchscore.apiResponses.teamsResponse.TeamsResponse;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -66,7 +68,7 @@ public final class SimpleService {
 
     public interface ResultsService {
         @Headers("X-Auth-Token: 23377c48baed4a65b9ac16a0499d62e9")
-        @GET("v2/competitions/{leagueId}/matches?status=FINISHED")
+        @GET("v2/competitions/{leagueId}/matches")
         Call<ResultsResponse> results(@Path("leagueId") int leagueId);
     }
 
@@ -181,7 +183,7 @@ public final class SimpleService {
                     for (Match match : matches) {
                         System.out.println(match.getHomeTeam().getName() + " (" + match.getScore().getFullTime().toString()+ ")");
                     }
-                    updateResults(database, resultsResponse, leagueId);
+                    updateResults(database, resultsResponse, leagueId, "no");
                 }
             }
 
@@ -267,6 +269,11 @@ public final class SimpleService {
                 league = "StandingsEngland";
                 db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsEngland';");
                 break;
+
+            case 2014:
+                league = "StandingsSpain";
+                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsSpain';");
+                break;
             case 2002:
                 league = "StandingsGermany";
                 db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsGermany';");
@@ -290,29 +297,54 @@ public final class SimpleService {
         teamValues.put("SHORTNAME", teamsDetails.getShortName());
         teamValues.put("ADDRESS", teamsDetails.getAddress());
         teamValues.put("WEBSITE", teamsDetails.getWebsite());
+        teamValues.put("VENUE", teamsDetails.getVenue());
+        teamValues.put("FOUNDED", teamsDetails.getFounded());
+
 //        teamValues.put("IMAGE_RESOURCE", name.replaceAll(" ", "_").toLowerCase());
         teamValues.put("IMAGE_RESOURCE", teamsDetails.getCrestUrl());
+        for(Squad player : teamsDetails.getSquad()){
+            String position, shirtNumber;
+            if(player.getPosition() == null) position = "Coach";
+            else position = player.getPosition().toString();
+            if(player.getShirtNumber() == null) shirtNumber = "";
+            else shirtNumber = player.getShirtNumber().toString();
+            insertPlayer(db,player.getId(),teamsDetails.getId(),position,player.getNationality(),
+                    player.getName(),shirtNumber, player.getDateOfBirth());
+        }
         db.insert("Team", null, teamValues);
     }
 
-    public static void updateResults(SQLiteDatabase db, ResultsResponse resultsList, int leagueId){
-        String league = "";
-        switch (leagueId)
-        {
-            case 2021:
-                league = "ResultsEngland";
-                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsEngland';");
-                break;
-            case 2002:
-                league = "ResultsGermany";
-                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsGermany';");
-        }
-        db.delete(league,"1",null);
+    public static void updateResults(SQLiteDatabase db, ResultsResponse resultsList, int leagueId, String isFollowed){
+//        String league = "";
+//        switch (leagueId)
+//        {
+//            case 2021:
+//                league = "ResultsEngland";
+//                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsEngland';");
+//                break;
+//            case 2002:
+//                league = "ResultsGermany";
+//                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsGermany';");
+//        }
+
+        db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='RESULT';");
+        String whereClause = "LEAGUE_ID = ? AND IS_FOLLOWED != ?";
+        String[] whereArgs = new String[] {
+                String.valueOf(leagueId), "yes"
+        };
+        db.delete("Result",whereClause,whereArgs);
 
         if(resultsList != null){
             for (Match match : resultsList.getMatches()) {
-                insertResult(db, league, match.getHomeTeam().getName(), match.getAwayTeam().getName(),match.getScore().getFullTime().getHomeTeam(),
-                        match.getScore().getFullTime().getAwayTeam());
+                int homeGoals = 0;
+                int awayGoals = 0;
+                if(match.getScore().getFullTime().getHomeTeam() != null && match.getScore().getFullTime().getAwayTeam() != null){
+                    homeGoals = match.getScore().getFullTime().getHomeTeam();
+                    awayGoals = match.getScore().getFullTime().getAwayTeam();
+                }
+                insertResult(db, leagueId, match.getId(), match.getMatchday(), match.getStatus(), match.getUtcDate(), match.getLastUpdated(), isFollowed,
+                        match.getHomeTeam().getName(), match.getAwayTeam().getName(),homeGoals,
+                        awayGoals);
             }
         }
     }
@@ -331,6 +363,21 @@ public final class SimpleService {
         db.insert(league, null, teamValues);
     }
 
+    private static void insertPlayer(SQLiteDatabase db, int id, int teamId,  String position, String nationality,
+                                   String name, String shirtNumber, String birthDate){
+        ContentValues playerValues = new ContentValues();
+
+        playerValues.put("ID", id);
+        playerValues.put("NAME", name);
+        playerValues.put("TEAM_ID", teamId);
+        playerValues.put("POSITION", position);
+        playerValues.put("NATIONALITY", nationality);
+        playerValues.put("SHIRT_NUMBER", shirtNumber);
+//        teamValues.put("IMAGE_RESOURCE", name.replaceAll(" ", "_").toLowerCase());
+        playerValues.put("BIRTH_DATE", birthDate);
+        db.insert("Player", null, playerValues);
+    }
+
     private static void insertTeamDetails(SQLiteDatabase db, String league, String name, String shortname,
                                    int points, int goalsScored, int goalsLoosed, String resource){
         ContentValues teamValues = new ContentValues();
@@ -344,14 +391,32 @@ public final class SimpleService {
         db.insert(league, null, teamValues);
     }
 
-    private static void insertResult(SQLiteDatabase db, String league, String teamA, String teamB,
-                                     int goalsA, int goalsB){
+    private static void insertResult(SQLiteDatabase db, int leagueId , int apiMatchId, int leagueWeek, String status, String matchDate, String lastUpdated,
+                                     String isFollowed, String teamHome, String teamAway, int goalsHome, int goalsAway){
         ContentValues teamValues = new ContentValues();
-        teamValues.put("TEAM_A", teamA);
-        teamValues.put("TEAM_B", teamB);
-        teamValues.put("GOALS_A", goalsA);
-        teamValues.put("GOALS_B", goalsB);
-        db.insert(league, null, teamValues);
+        teamValues.put("ID", apiMatchId);
+        teamValues.put("LEAGUE_ID", leagueId);
+        teamValues.put("LEAGUE_WEEK", leagueWeek);
+        teamValues.put("STATUS", status);
+        teamValues.put("MATCH_DATE", matchDate);
+        teamValues.put("LAST_UPDATED", lastUpdated);
+        teamValues.put("IS_FOLLOWED", isFollowed);
+        teamValues.put("HOME_TEAM", teamHome);
+        teamValues.put("AWAY_TEAM", teamAway);
+
+        teamValues.put("GOALS_HOME", goalsHome);
+        teamValues.put("GOALS_AWAY", goalsAway);
+
+        // check if apiID exist in database
+        String whereClause = "(ID = ?)";
+        String[] whereArgs = new String[] {
+                String.valueOf(apiMatchId)
+        };
+        Cursor checkCursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED", "ID"}, whereClause, whereArgs, null, null, null);
+
+        if(checkCursor.getCount() == 0) {
+            db.insert("Result", null, teamValues);
+        }
     }
 
     private static void updateTeamFragment(SQLiteDatabase db, int teamId) {
@@ -362,8 +427,11 @@ public final class SimpleService {
 
         ImageView teamsLogo = mActivity.findViewById(R.id.teamsLogo);
         TextView teamName = mActivity.findViewById(R.id.teamsName);
+        TextView teamStadium = mActivity.findViewById(R.id.stadiumTextIn2);
+        TextView teamAddress = mActivity.findViewById(R.id.addressTextIn);
+        TextView teamWebsite = mActivity.findViewById(R.id.websiteTextIn);
 
-        Cursor cursor = db.query("Team", new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "ADDRESS", "WEBSITE"}, whereClause, whereArgs, null, null, null);
+        Cursor cursor = db.query("Team", new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "ADDRESS", "WEBSITE", "VENUE"}, whereClause, whereArgs, null, null, null);
 
         cursor.moveToPosition(0);
         Context context = teamsLogo.getContext();
@@ -372,6 +440,9 @@ public final class SimpleService {
         if (cursor.getCount() > 0) {
             String team = cursor.getString(3);
             teamName.setText(cursor.getString(3));
+            teamAddress.setText(cursor.getString(4));
+            teamWebsite.setText(cursor.getString(5));
+            teamStadium.setText(cursor.getString(6));
             String teamLogoUrl = cursor.getString(2);
             if (teamLogoUrl.contains(".cvg")) {
                 Uri uri = Uri.parse(teamLogoUrl);

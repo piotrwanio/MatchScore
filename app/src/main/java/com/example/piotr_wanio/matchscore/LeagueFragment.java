@@ -87,18 +87,21 @@ public class LeagueFragment extends Fragment {
         textView = (TextView)view.findViewById(R.id.textView);
         standingsButton = (Button)view.findViewById(R.id.button);
         scoresButton = (Button) view.findViewById(R.id.button2);
+        scheduleButton = (Button) view.findViewById(R.id.button3);
 
         Bundle bundle = getArguments();
-        int leagueId = bundle.getInt("index", 0);
+        int leagueId = bundle.getInt("leagueId", 0);
         String league = "";
-        SimpleService simpleService = new SimpleService(this.getActivity());
         switch (leagueId)
         {
-            case 1:
+            case 2021:
                 league = "Premier League";
                 break;
-            case 2:
+            case 2002:
                 league = "Bundesliga";
+                break;
+            case 2014:
+                league = "La Liga";
         }
 
         Context context = leagueLogo.getContext();
@@ -110,7 +113,7 @@ public class LeagueFragment extends Fragment {
             Bundle args = new Bundle();
             fragment = new TableFragment();
             fragment.setArguments(args);
-            args.putInt("index", leagueId);
+            args.putInt("leagueId", leagueId);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.replace(R.id.content_frame, fragment, "visible_fragment");
             ft.addToBackStack(null);
@@ -122,7 +125,20 @@ public class LeagueFragment extends Fragment {
             Bundle args = new Bundle();
             fragment = new ResultsFragment();
             fragment.setArguments(args);
-            args.putInt("index", leagueId);
+            args.putInt("leagueId", leagueId);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, fragment, "visible_fragment");
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        });
+
+
+        scheduleButton.setOnClickListener(v->{
+            Bundle args = new Bundle();
+            fragment = new ScheduleFragment();
+            fragment.setArguments(args);
+            args.putInt("leagueId", leagueId);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.replace(R.id.content_frame, fragment, "visible_fragment");
             ft.addToBackStack(null);

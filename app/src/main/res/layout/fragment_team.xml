@@ -9,14 +9,14 @@
     <!-- TODO: Update blank fragment layout -->
     <TextView
         android:id="@+id/addressTextIn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="291dp"
+        android:layout_height="25dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:text="TextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.482"
+        app:layout_constraintHorizontal_bias="0.253"
         app:layout_constraintStart_toEndOf="@+id/addressText"
         app:layout_constraintTop_toBottomOf="@+id/teamsLogo" />
 
@@ -37,10 +37,10 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginStart="31dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="30dp"
         android:src="@drawable/arsenal_fc"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.475"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/teamsName" />
 
@@ -48,9 +48,9 @@
         android:id="@+id/addressText"
         android:layout_width="wrap_content"
         android:layout_height="19dp"
-        android:layout_marginStart="84dp"
-        android:layout_marginTop="8dp"
-        android:text="TextView"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:text="Adres: "
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/teamsLogo" />
 
@@ -58,23 +58,93 @@
         android:id="@+id/websiteText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="84dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:text="Strona:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stadiumText3" />
+
+    <TextView
+        android:id="@+id/stadiumTextIn2"
+        android:layout_width="294dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.21"
+        app:layout_constraintStart_toEndOf="@+id/websiteText"
+        app:layout_constraintTop_toBottomOf="@+id/addressTextIn" />
+
+    <TextView
+        android:id="@+id/stadiumText3"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:text="Stadion:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/addressText" />
 
     <TextView
         android:id="@+id/websiteTextIn"
-        android:layout_width="69dp"
-        android:layout_height="17dp"
-        android:layout_marginStart="104dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="290dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="8dp"
         android:text="TextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.384"
         app:layout_constraintStart_toEndOf="@+id/websiteText"
-        app:layout_constraintTop_toBottomOf="@+id/addressTextIn" />
+        app:layout_constraintTop_toBottomOf="@+id/stadiumTextIn2" />
+
+    <Button
+        android:id="@+id/playersButton"
+        android:layout_width="83dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="4dp"
+        android:text="Zawodnicy"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/websiteText" />
+
+    <Button
+        android:id="@+id/scoresButton"
+        android:layout_width="78dp"
+        android:layout_height="31dp"
+        android:layout_marginStart="36dp"
+        android:text="Wyniki"
+        android:textSize="10sp"
+        app:layout_constraintStart_toEndOf="@+id/playersButton"
+        app:layout_constraintTop_toTopOf="@+id/playersButton" />
+
+    <Button
+        android:id="@+id/scheduleButton"
+        android:layout_width="81dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="40dp"
+        android:text="Terminarz"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.857"
+        app:layout_constraintStart_toEndOf="@+id/scoresButton"
+        app:layout_constraintTop_toTopOf="@+id/scoresButton" />
+
+    <FrameLayout
+        android:id="@+id/contentTeamView"
+        android:layout_width="388dp"
+        android:layout_height="214dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="11dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scoresButton">
+
+    </FrameLayout>
 
 </android.support.constraint.ConstraintLayout>

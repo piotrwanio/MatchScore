@@ -1,6 +1,7 @@
 package com.example.piotr_wanio.matchscore;
 
 
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,6 +48,9 @@ public class TeamFragment extends Fragment {
 
         ImageView teamsLogo = (ImageView)view.findViewById(R.id.teamsLogo);
         TextView teamName = (TextView)view.findViewById(R.id.teamsName);
+        Button playersButton = (Button)view.findViewById(R.id.playersButton);
+        Button scoresButton = (Button)view.findViewById(R.id.scoresButton);
+        Button scheduleButton = (Button)view.findViewById(R.id.scheduleButton);
 
         Bundle bundle = getArguments();
         int teamId = bundle.getInt("teamId", 0);
@@ -105,6 +110,42 @@ public class TeamFragment extends Fragment {
 
             toast.show();
         }
+
+        scoresButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putInt("leagueId", 2021);
+            Fragment fragment = new ResultsFragment();
+            fragment.setArguments(args);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.replace(R.id.contentTeamView, fragment, "visible_fragment");
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        });
+
+        scheduleButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putInt("leagueId", 2021);
+            Fragment fragment = new ScheduleFragment();
+            fragment.setArguments(args);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.replace(R.id.contentTeamView, fragment, "visible_fragment");
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        });
+
+        playersButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putInt("teamId", teamId);
+            Fragment fragment = new PlayersFragment();
+            fragment.setArguments(args);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.replace(R.id.contentTeamView, fragment, "visible_fragment");
+            ft.addToBackStack(null);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        });
         return view;
     }
 

@@ -37,38 +37,28 @@ public class ResultsFragment extends Fragment {
 
             db = matchScoreDatabaseHelper.getReadableDatabase();
 
-            String[] from = {"TEAM_A", "GOALS_A", "GOALS_B", "TEAM_B"};
-            int[] to = {R.id.listview_item_teamA, R.id.listview_item_goals_teamA,
-                    R.id.listview_item_goals_teamB, R.id.listview_item_teamB};
+            String[] from = {"LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM"};
+            int[] to = {R.id.results_item_leagueweek, R.id.results_item_teamA, R.id.results_item_goals_teamA,
+                    R.id.results_item_goals_teamB, R.id.results_item_teamB};
 
 
             Bundle bundle = getArguments();
-            int leagueId = bundle.getInt("index", 0);
-            String league = "";
+            int leagueAPIId = bundle.getInt("leagueId", 0);
             SimpleService simpleService = new SimpleService(this.getActivity());
 
-            switch (leagueId)
-            {
-                case 1:
-                    try {
-                        simpleService.getResultsResponse(db, 2021);
-                    }
-                    catch (IOException e) {
-                        Log.d("IOException", "IOEXCEPTION");
-                    }
-                    league = "ResultsEngland";
-                    break;
-                case 2:
-                    try {
-                        simpleService.getResultsResponse(db, 2002);
-                    }
-                    catch (IOException e) {
-                        Log.d("IOException", "IOEXCEPTION");
-                    }
-                    league = "ResultsGermany";
+            try {
+                simpleService.getResultsResponse(db, leagueAPIId);
+            }
+            catch (IOException e) {
+                Log.d("IOException", "IOEXCEPTION");
             }
 
-            cursor = db.query(league, new String[]{"_id", "TEAM_A", "GOALS_A", "GOALS_B", "TEAM_B"}, null, null, null, null, null);
+            String whereClause = "STATUS = ? AND LEAGUE_ID = ?";
+            String[] whereArgs = new String[] {
+                    "FINISHED", String.valueOf(leagueAPIId)
+            };
+            cursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID"},
+                    whereClause, whereArgs, null, null, "LEAGUE_WEEK DESC");
             CursorAdapter listAdapter = new SimpleCursorAdapter(getActivity(),
                     R.layout.listview_activity,
                     cursor,
@@ -79,7 +69,7 @@ public class ResultsFragment extends Fragment {
                     0);
             listResults.setAdapter(listAdapter);
         }catch (SQLiteException e){
-            Toast toast = Toast.makeText(inflater.getContext(), "Baza danych jest niedostępna!", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(inflater.getContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);
 
             toast.show();
         }
