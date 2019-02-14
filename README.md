@@ -1,3 +1,3 @@
 # matchScore
 
-matchScore is application, that shows football scores and league table with use of the custom API
+matchScore is Android application that shows football standings, schedules, latest results & live scores for best european leagues.
