@@ -5,55 +5,108 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.example.piotr_wanio.matchscore.apiResponses.standingsResponse.StandingsResponse;
+import com.example.piotr_wanio.matchscore.apiResponses.standingsResponse.Table;
+
 import java.util.List;
 
-/**
- * Created by Piotr_Wanio on 01.04.2018.
- */
 
 public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
 
-    private static final String DB_NAME = "matchScore";
+    private static MatchScoreDatabaseHelper instance;
+    private  Context mCtx;
+    private static final String DB_NAME = "matchScoreDB";
     private static final int DB_VERSION = 1;
-    private static List<SimpleService.Team> teamsList;
+    private static StandingsResponse teamsList;
 
-    MatchScoreDatabaseHelper(Context context) {
+
+    public static MatchScoreDatabaseHelper getInstance(Context context){
+        if(instance == null) {
+            try {
+                instance = new MatchScoreDatabaseHelper(context);
+            } catch (Exception e) {
+                throw new RuntimeException("Exception occured in creating singleton instance");
+            }
+        }
+        return instance;
+    }
+
+    private MatchScoreDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+        this.mCtx = context;
     }
 
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        SimpleService service = new SimpleService();
-        try {
-            teamsList = service.run();
-        }catch (Exception e){
-            System.out.println("Service exception :/");
-        }
 
-        db.execSQL("CREATE TABLE TEAM (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        db.execSQL("CREATE TABLE StandingsEngland (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
                 + "NAME TEXT, "
                 + "SHORTNAME TEXT, "
                 + "POINTS INTEGER, "
                 + "GOALS_SCORED INTEGER, "
                 + "GOALS_LOOSED INTEGER, "
-                + "IMAGE_RESOURCE_ID INTEGER);");
-//        for (SimpleService.Team team : teamsList) {
-//            insertTeam(db,team.name.toString(),team.shortName.toString(),0,0,0,0);
-//        }
-        insertTeam(db," FC","AFC",0,0,0,0);
-        insertTeam(db,"Real Madrit CF","REA",0,0,0,0);
-        insertTeam(db,"FC Barcelona","FCB",0,0,0,0);
-        insertTeam(db,"Bayern Munchen","BAY",0,0,0,0);
+                + "IMAGE_RESOURCE TEXT);");
 
-        db.execSQL("CREATE TABLE RESULT (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "TEAM_A TEXT, "
-                + "TEAM_B TEXT, "
-                + "GOALS_A INTEGER, "
-                + "GOALS_B INTEGER);");
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
-        insertResult(db,"Arsenal FC", "Real Madrit CF", 5, 2);
+        db.execSQL("CREATE TABLE StandingsGermany (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "NAME TEXT, "
+                + "SHORTNAME TEXT, "
+                + "POINTS INTEGER, "
+                + "GOALS_SCORED INTEGER, "
+                + "GOALS_LOOSED INTEGER, "
+                + "IMAGE_RESOURCE TEXT);");
+
+        db.execSQL("CREATE TABLE StandingsSpain (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "NAME TEXT, "
+                + "SHORTNAME TEXT, "
+                + "POINTS INTEGER, "
+                + "GOALS_SCORED INTEGER, "
+                + "GOALS_LOOSED INTEGER, "
+                + "IMAGE_RESOURCE TEXT);");
+
+        db.execSQL("CREATE TABLE Team (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "LEAGUE_ID, "
+                + "NAME TEXT, "
+                + "SHORTNAME TEXT, "
+                + "FOUNDED INTEGER, "
+                + "ADDRESS TEXT, "
+                + "VENUE TEXT, "
+                + "WEBSITE TEXT, "
+                + "IMAGE_RESOURCE TEXT);");
+
+        if(teamsList != null){
+            for (Table team : teamsList.getStandings().get(0).getTable()) {
+                insertTeam(db,team.getTeam().getName(),"",(int)team.getPoints(),0,0,0);
+            }
+        }
+
+        db.execSQL("CREATE TABLE Result (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "ID INTEGER, "
+                + "LEAGUE_ID INTEGER, "
+                + "LEAGUE_WEEK INTEGER,"
+                + "HOME_TEAM TEXT, "
+                + "AWAY_TEAM TEXT, "
+                + "STATUS TEXT, "
+                + "MATCH_DATE TEXT,"
+                + "LAST_UPDATED TEXT,"
+                + "IS_FOLLOWED TEXT, "
+                + "GOALS_HOME TEXT, "
+                + "GOALS_AWAY TEXT);");
+
+        db.execSQL("CREATE TABLE Player (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "NAME TEXT, "
+                + "ID INTEGER,"
+                + "TEAM_ID INTEGER,"
+                + "POSITION TEXT, "
+                + "NATIONALITY TEXT, "
+                + "SHIRT_NUMBER INTEGER, "
+                + "BIRTH_DATE TEXT);");
+
+
     }
 
     @Override
@@ -61,15 +114,22 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
 
         db.delete("TEAM","1",null);
         db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='TEAM';");
-        SimpleService service = new SimpleService();
-        try {
-            teamsList = service.run();
-        }catch (Exception e){
-            System.out.println("Service exception :/");
-        }
+
         if(teamsList != null){
-            for (SimpleService.Team team : teamsList) {
-                insertTeam(db,team.name.toString(),team.shortName.toString(),(int)team.points,0,0,0);
+            for (Table team : teamsList.getStandings().get(0).getTable()) {
+                insertTeam(db,team.getTeam().getName(),"",(int)team.getPoints(),0,0,0);
+            }
+        }
+    }
+
+
+    public void updateStandings(SQLiteDatabase db, int leagueId){
+        db.delete("TEAM","1",null);
+        db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='TEAM';");
+
+        if(teamsList != null){
+            for (Table team : teamsList.getStandings().get(0).getTable()) {
+                insertTeam(db,team.getTeam().getName(),"",(int)team.getPoints(),0,0,0);
             }
         }
     }
@@ -83,7 +143,7 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
         teamValues.put("GOALS_SCORED", goalsScored);
         teamValues.put("GOALS_LOOSED", goalsLoosed);
         teamValues.put("IMAGE_RESOURCE_ID", resourceID);
-        db.insert("TEAM", null, teamValues);
+        db.insert("StandingsEngland", null, teamValues);
     }
 
     private static void insertResult(SQLiteDatabase db, String teamA, String teamB,
@@ -93,6 +153,8 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
         teamValues.put("TEAM_B", teamB);
         teamValues.put("GOALS_A", goalsA);
         teamValues.put("GOALS_B", goalsB);
-        db.insert("RESULT", null, teamValues);
+        db.insert("ResultsEngland", null, teamValues);
     }
+
+
 }

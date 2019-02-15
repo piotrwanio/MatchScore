@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TeamFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
+        android:id="@+id/addressTextIn"
+        android:layout_width="194dp"
+        android:layout_height="23dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="TextView"
+        app:layout_constraintStart_toEndOf="@+id/addressText"
+        app:layout_constraintTop_toBottomOf="@+id/teamsLogo" />
+
+    <TextView
+        android:id="@+id/teamsName"
+        android:layout_width="192dp"
+        android:layout_height="43dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="92dp"
+        android:text="@string/hello_blank_fragment"
+        android:textAlignment="center"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toStartOf="@+id/playersButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/teamsLogo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginStart="104dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/arsenal_fc"
+        app:layout_constraintEnd_toStartOf="@+id/contentTeamView"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/teamsName" />
+
+    <TextView
+        android:id="@+id/addressText"
+        android:layout_width="wrap_content"
+        android:layout_height="19dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:text="Adres: "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/teamsLogo" />
+
+    <TextView
+        android:id="@+id/websiteText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:text="Strona:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stadiumText3" />
+
+    <TextView
+        android:id="@+id/stadiumTextIn2"
+        android:layout_width="194dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="@+id/addressTextIn"
+        app:layout_constraintStart_toEndOf="@+id/websiteText"
+        app:layout_constraintTop_toBottomOf="@+id/addressTextIn" />
+
+    <TextView
+        android:id="@+id/stadiumText3"
+        android:layout_width="wrap_content"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:text="Stadion:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/addressText" />
+
+    <TextView
+        android:id="@+id/websiteTextIn"
+        android:layout_width="200dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="41dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/stadiumTextIn2"
+        app:layout_constraintStart_toEndOf="@+id/websiteText"
+        app:layout_constraintTop_toBottomOf="@+id/stadiumTextIn2" />
+
+    <Button
+        android:id="@+id/playersButton"
+        android:layout_width="78dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="20dp"
+        android:text="Zawodnicy"
+        android:textSize="10sp"
+        app:layout_constraintStart_toEndOf="@+id/teamsName"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/scoresButton"
+        android:layout_width="80dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="28dp"
+        android:text="Wyniki"
+        android:textSize="10sp"
+        app:layout_constraintStart_toEndOf="@+id/playersButton"
+        app:layout_constraintTop_toTopOf="@+id/playersButton" />
+
+    <Button
+        android:id="@+id/scheduleButton"
+        android:layout_width="69dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="Terminarz"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/scoresButton"
+        app:layout_constraintTop_toTopOf="@+id/scoresButton" />
+
+    <FrameLayout
+        android:id="@+id/contentTeamView"
+        android:layout_width="0dp"
+        android:layout_height="214dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.951"
+        app:layout_constraintStart_toEndOf="@+id/addressTextIn"
+        app:layout_constraintTop_toBottomOf="@+id/scoresButton"
+        app:layout_constraintVertical_bias="0.52">
+
+    </FrameLayout>
+
+</android.support.constraint.ConstraintLayout>

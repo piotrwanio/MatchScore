@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/results_list_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:contentDescription="@string/app_name">
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="43dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/schedule_item_leagueweek"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:text="2"
+            android:textAlignment="center"
+            android:textSize="10sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/schedule_item_date"
+            android:layout_width="41dp"
+            android:layout_height="100dp"
+            android:text="10.10.2019 9:33"
+            android:textSize="8sp" />
+
+        <TextView
+            android:id="@+id/schedule_item_teamA"
+            android:layout_width="81dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="0dp"
+            android:padding="10dp"
+            android:text="Wisła"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_leagueweek"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/schedule_item_goals_teamA"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:paddingLeft="0dp"
+            android:paddingTop="0dp"
+            android:text="-"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_teamA"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_teamA" />
+
+        <TextView
+            android:id="@+id/vs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:text=":"
+            android:textAlignment="center"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_goals_teamA"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/schedule_item_goals_teamB"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:padding="10dp"
+            android:paddingLeft="0dp"
+            android:paddingTop="0dp"
+            android:text="-"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@+id/vs"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_leagueweek" />
+
+        <TextView
+            android:id="@+id/schedule_item_teamB"
+            android:layout_width="91dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp"
+            android:padding="10dp"
+            android:paddingLeft="0dp"
+            android:text="Legia"
+            android:textAlignment="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_goals_teamB"
+            app:layout_constraintTop_toTopOf="@+id/schedule_item_leagueweek" />
+
+        <ImageView
+            android:id="@+id/followStar"
+            android:layout_width="31dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/schedule_item_teamB"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:drawable/btn_star_big_off" />
+    </TableRow>
+
+</android.support.constraint.ConstraintLayout>
