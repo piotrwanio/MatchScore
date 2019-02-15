@@ -33,6 +33,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.DateSorter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CursorAdapter;
@@ -56,8 +57,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.stream.Stream;
 
 public class ScoresActivity extends Activity implements TableFragment.OnTeamSelectedListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
@@ -70,14 +75,6 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
     private long UPDATE_INTERVAL = 2 * 1000;  /* 10 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
 
-    // Progress Dialog
-    private ProgressDialog pDialog;
-    public static final int progress_bar_type = 0;
-
-    // File url to download
-    private static String file_url = "http://www.qwikisoft.com/demo/ashade/20001.kml";
-
-
     private String[] menuOptions;
     private ListView drawerList;
     DrawerLayout drawerLayout;
@@ -86,17 +83,18 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
     private ShareActionProvider shareActionProvider;
     private ActionBarDrawerToggle drawerToggle;
 
-    private SQLiteDatabase db;
     SQLiteOpenHelper matchScoreDatabaseHelper;
 
     @Override
-    public void onTeamSelected(int teamId) {
+    public void onTeamSelected(int teamId, int leagueId) {
 
 
         Fragment fragment;
         Bundle args = new Bundle();
         fragment = new TeamFragment();
         args.putInt("teamId", teamId);
+        args.putInt("leagueId", leagueId);
+
         fragment.setArguments(args);
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.replace(R.id.content_frame, fragment, "visible_fragment");
@@ -126,7 +124,6 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
         drawerList = (ListView) findViewById(R.id.drawer);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-
         // Google API GPS
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -143,25 +140,6 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
         drawerList.setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_activated_1, menuOptions));
         drawerList.setOnItemClickListener(new DrawerItemClickListener());
-
-        try {
-            if(db == null){
-                matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(this);
-            }
-
-            String[] from = {"_id", "NAME", "POINTS", "GOALS_SCORED"};
-            int[] to = {R.id.tablerow_item_place, R.id.tablerow_item_team,
-                    R.id.tablerow_item_points, R.id.tablerow_item_goals};
-
-            db = matchScoreDatabaseHelper.getWritableDatabase();
-//            matchScoreDatabaseHelper.onUpgrade(db,1,1);
-
-
-        }catch (SQLiteException e){
-            Toast toast = Toast.makeText(this, "Baza danych jest niedostępna!", Toast.LENGTH_SHORT);
-
-            toast.show();
-        }
 
 
         // Wyświetlamy odpowiedni fragment
@@ -188,7 +166,7 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
         };
         drawerLayout.addDrawerListener(drawerToggle);
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
+//        getActionBar().setHomeButtonEnabled(true);
 
     }
 
@@ -207,14 +185,14 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
         Bundle args = new Bundle();
 
         SimpleService simpleService = new SimpleService(this);
-        try {
-            simpleService.getStandingsResponse(db, null, 2021);
-            simpleService.getStandingsResponse(db, null, 2014);
-            simpleService.getStandingsResponse(db, null, 2002);
-        }
-        catch (Exception e){
-
-        }
+//        try {
+//            simpleService.getStandingsResponse(null, 2021);
+//            simpleService.getStandingsResponse(null, 2014);
+//            simpleService.getStandingsResponse(null, 2002);
+//        }
+//        catch (Exception e){
+//
+//        }
 
 
         switch (position) {
@@ -305,21 +283,16 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
 
+
+
+    }
 
     // Google API Location
 
     @Override
     public void onConnected(Bundle bundle) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         } startLocationUpdates();
         mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -358,8 +331,11 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
                 double dist2 = mLocation.distanceTo(location3);
                 double dist3 = mLocation.distanceTo(location4);
 
+                AsyncFindTeam asyncFindTeam = new AsyncFindTeam();
+                asyncFindTeam.setGeocoder(gcd);
+                asyncFindTeam.execute();
+//                Toast.makeText(getApplicationContext(),"do paryza:"+dist+" do berlina:"+dist2 + "na pomorska: " + dist3,Toast.LENGTH_LONG).show();
 
-                Toast.makeText(getApplicationContext(),"do paryza:"+dist+" do berlina:"+dist2 + "na pomorska: " + dist3,Toast.LENGTH_LONG).show();
 
 
                 if (addresses.size() > 0) {
@@ -533,5 +509,82 @@ public class ScoresActivity extends Activity implements TableFragment.OnTeamSele
             }
 
         }
+    }
+
+    private class AsyncFindTeam extends AsyncTask{
+
+        Geocoder geocoder;
+
+        public void setGeocoder(Geocoder geocoder) {
+            this.geocoder = geocoder;
+        }
+
+
+        @Override
+        protected void onProgressUpdate(Object[] values) {
+            super.onProgressUpdate(values);
+
+        }
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            findNearestTeam(geocoder);
+            return null;
+        }
+    }
+    public void findNearestTeam (Geocoder gcd){
+        List<Address> addresses;
+        MatchScoreDatabaseHelper matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(this);
+        SQLiteDatabase db = null;
+        HashMap<String, Float> cities = new HashMap<String, Float>();
+        Float distance = null;
+
+        try {
+            db = matchScoreDatabaseHelper.getReadableDatabase();
+
+            Cursor  cursor = db.rawQuery("select * from Team",null);
+            int count = cursor.getCount();
+            if (cursor.moveToFirst()) {
+                while (!cursor.isAfterLast()) {
+                    String cityFromName = cursor.getString(cursor.getColumnIndex("ADDRESS"));
+                    try {
+                        addresses = gcd.getFromLocationName(cityFromName,1);
+                        Location location = new Location("");
+                        location.setLatitude(addresses.get(0).getLatitude());
+                        location.setLongitude(addresses.get(0).getLongitude());
+                        distance = mLocation.distanceTo(location);
+
+                    }
+                    catch (Exception e){
+
+                    }
+                    cities.put(cityFromName, distance);
+                    cursor.moveToNext();
+                }
+                cities.size();
+                Stream<Map.Entry<String,Float>> sorted =
+                        cities.entrySet().stream()
+                                .sorted(Map.Entry.comparingByValue());
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+
+                        Toast toast = Toast.makeText(getApplicationContext(), "Najbliższe miasto: " + sorted.findFirst().toString(), Toast.LENGTH_SHORT);
+                        toast.show();                    }
+                });
+
+
+            }
+            cursor.close();
+//            db.close();
+        }
+        catch (SQLiteException e){
+            Toast toast = Toast.makeText(getApplicationContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);
+
+            toast.show();
+        }
+
+
+
     }
 }

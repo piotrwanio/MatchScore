@@ -57,7 +57,7 @@ public class PlayersFragment extends Fragment {
 
         try {
             if(db == null){
-                matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(getActivity());
+                matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(getActivity());
             }
 
             String[] from = {"NAME", "SHIRT_NUMBER", "NATIONALITY", "POSITION", "BIRTH_DATE"};

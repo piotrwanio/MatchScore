@@ -39,9 +39,6 @@ import java.io.InputStream;
 import static com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions.withCrossFade;
 
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class TableFragment extends Fragment {
 
 
@@ -59,7 +56,7 @@ public class TableFragment extends Fragment {
     // Define the events that the fragment will use to communicate
     public interface OnTeamSelectedListener {
         // This can be any number of events to be sent to the activity
-        public void onTeamSelected(int teamId);
+        public void onTeamSelected(int teamId, int leagueId);
     }
 
     @Override
@@ -70,12 +67,12 @@ public class TableFragment extends Fragment {
 
         try {
             if(db == null){
-                matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(getActivity());
+                matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(getActivity());
             }
 
-            String[] from = {"_id", "IMAGE_RESOURCE", "NAME", "POINTS", "GOALS_SCORED"};
+            String[] from = {"_id", "IMAGE_RESOURCE", "NAME", "POINTS", "GOALS_SCORED", "GOALS_LOOSED"};
             int[] to = {R.id.tablerow_item_place, R.id.tablerow_item_logo, R.id.tablerow_item_team,
-                    R.id.tablerow_item_points, R.id.tablerow_item_goals};
+                    R.id.tablerow_item_points, R.id.tablerow_item_goals_scored, R.id.tablerow_item_goals_loosed};
 
 
             db = matchScoreDatabaseHelper.getReadableDatabase();
@@ -98,7 +95,7 @@ public class TableFragment extends Fragment {
                 case 2002:
                     league = "StandingsGermany";
             }
-            cursor = db.query(league, new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "POINTS", "GOALS_SCORED"}, null, null, null, null, null);
+            cursor = db.query(league, new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "POINTS", "GOALS_SCORED", "GOALS_LOOSED"}, null, null, null, null, "POINTS DESC");
             listAdapter = new SimpleCursorAdapter(getActivity(),
                     R.layout.tablerow_activity,
                     cursor,
@@ -107,6 +104,14 @@ public class TableFragment extends Fragment {
                     from,
                     to,
                     0);
+
+            SimpleService simpleService = new SimpleService(this.getActivity());
+            try {
+                simpleService.getStandingsResponse(listAdapter, leagueApiId);
+            }
+            catch (IOException e) {
+                Log.d("IOException", "IOEXCEPTION");
+            }
 
             ((SimpleCursorAdapter) listAdapter).setViewBinder(new SimpleCursorAdapter.ViewBinder(){
                 /** Binds the Cursor column defined by the specified index to the specified view */
@@ -151,22 +156,16 @@ public class TableFragment extends Fragment {
             });
 
             listResults.setAdapter(listAdapter);
-            SimpleService simpleService = new SimpleService(this.getActivity());
             listResults.setOnItemClickListener((parent,
                                                 v,
                                                 position,
                                                 id)->{
                 Object o = parent.getItemAtPosition(position);
-                cursor.moveToPosition(position);
-                String name = cursor.getString(1);
+                listAdapter.getCursor().moveToPosition(position);
+                String name = listAdapter.getCursor().getString(1);
 
-                onTeamSelectedListener.onTeamSelected(Integer.parseInt(name));
-//                try {
-//                    simpleService.getStandingsResponse(db, listAdapter, leagueApiId);
-//                }
-//                catch (IOException e) {
-//                    Log.d("IOException", "IOEXCEPTION");
-//                }
+                onTeamSelectedListener.onTeamSelected(Integer.parseInt(name), leagueApiId);
+
             });
 
 
@@ -185,7 +184,7 @@ public class TableFragment extends Fragment {
             cursor.close();
         }
         if(null !=db){
-            db.close();
+//            db.close();
         }
     }
 

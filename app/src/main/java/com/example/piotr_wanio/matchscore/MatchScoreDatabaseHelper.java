@@ -10,29 +10,35 @@ import com.example.piotr_wanio.matchscore.apiResponses.standingsResponse.Table;
 
 import java.util.List;
 
-/**
- * Created by Piotr_Wanio on 01.04.2018.
- */
 
 public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
 
+    private static MatchScoreDatabaseHelper instance;
+    private  Context mCtx;
     private static final String DB_NAME = "matchScoreDB";
     private static final int DB_VERSION = 1;
     private static StandingsResponse teamsList;
 
-    MatchScoreDatabaseHelper(Context context) {
+
+    public static MatchScoreDatabaseHelper getInstance(Context context){
+        if(instance == null) {
+            try {
+                instance = new MatchScoreDatabaseHelper(context);
+            } catch (Exception e) {
+                throw new RuntimeException("Exception occured in creating singleton instance");
+            }
+        }
+        return instance;
+    }
+
+    private MatchScoreDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+        this.mCtx = context;
     }
 
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-//        SimpleService service = new SimpleService();
-//        try {
-//            teamsList = service.getStandingsResponse(db, 2012);
-//        }catch (Exception e){
-//            System.out.println("Service exception :/");
-//        }
 
         db.execSQL("CREATE TABLE StandingsEngland (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "ID INTEGER, "
@@ -63,6 +69,7 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
 
         db.execSQL("CREATE TABLE Team (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "ID INTEGER, "
+                + "LEAGUE_ID, "
                 + "NAME TEXT, "
                 + "SHORTNAME TEXT, "
                 + "FOUNDED INTEGER, "
@@ -87,8 +94,8 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
                 + "MATCH_DATE TEXT,"
                 + "LAST_UPDATED TEXT,"
                 + "IS_FOLLOWED TEXT, "
-                + "GOALS_HOME INTEGER, "
-                + "GOALS_AWAY INTEGER);");
+                + "GOALS_HOME TEXT, "
+                + "GOALS_AWAY TEXT);");
 
         db.execSQL("CREATE TABLE Player (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "NAME TEXT, "
@@ -107,12 +114,7 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
 
         db.delete("TEAM","1",null);
         db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='TEAM';");
-//        SimpleService service = new SimpleService();
-//        try {
-//            teamsList = service.getStandingsResponse(db, 2012);
-//        }catch (Exception e){
-//            System.out.println("Service exception :/");
-//        }
+
         if(teamsList != null){
             for (Table team : teamsList.getStandings().get(0).getTable()) {
                 insertTeam(db,team.getTeam().getName(),"",(int)team.getPoints(),0,0,0);
@@ -124,12 +126,7 @@ public class MatchScoreDatabaseHelper extends SQLiteOpenHelper {
     public void updateStandings(SQLiteDatabase db, int leagueId){
         db.delete("TEAM","1",null);
         db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='TEAM';");
-//        SimpleService service = new SimpleService();
-//        try {
-//            teamsList = service.getStandingsResponse(db, 2012);
-//        }catch (Exception e){
-//            System.out.println("Service exception :/");
-//        }
+
         if(teamsList != null){
             for (Table team : teamsList.getStandings().get(0).getTable()) {
                 insertTeam(db,team.getTeam().getName(),"",(int)team.getPoints(),0,0,0);

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +26,7 @@ public class MyMatchesFragment extends Fragment {
 
     private SQLiteDatabase db;
     private Cursor cursor;
+    CursorAdapter listAdapter;
     SQLiteOpenHelper matchScoreDatabaseHelper;
 
     @Override
@@ -33,50 +35,46 @@ public class MyMatchesFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_my_matches, container, false);
         ListView listResults = (ListView)view.findViewById(R.id.scoreslist);
+        SwipeRefreshLayout pullToRefresh = view.findViewById(R.id.pullToRefresh2);
 
         try {
             if(db == null){
-                matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(getActivity());
+                matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(getActivity());
             }
 
             db = matchScoreDatabaseHelper.getReadableDatabase();
 
-            String[] from = {"LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "IS_FOLLOWED"};
-            int[] to = {R.id.schedule_item_leagueweek, R.id.schedule_item_teamA, R.id.schedule_item_goals_teamA,
+            String[] from = {"MATCH_DATE", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "IS_FOLLOWED"};
+            int[] to = {R.id.schedule_item_date, R.id.schedule_item_leagueweek, R.id.schedule_item_teamA, R.id.schedule_item_goals_teamA,
                     R.id.schedule_item_goals_teamB, R.id.schedule_item_teamB, R.id.followStar};
 
 
             Bundle bundle = getArguments();
-            int leagueId = bundle.getInt("index", 0);
-            int leagueAPIId = 0;
+
             SimpleService simpleService = new SimpleService(this.getActivity());
 
-            switch (leagueId)
-            {
-                case 1:
-                    try {
-                        simpleService.getResultsResponse(db, 2021);
-                    }
-                    catch (IOException e) {
-                        Log.d("IOException", "IOEXCEPTION");
-                    }
-                    leagueAPIId = 2021;
-                    break;
-                case 2:
-                    try {
-                        simpleService.getResultsResponse(db, 2002);
-                    }
-                    catch (IOException e) {
-                        Log.d("IOException", "IOEXCEPTION");
-                    }
-            }
 
-            String whereClause = "(STATUS = ? OR STATUS = ?) AND IS_FOLLOWED = ?";
+            pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    try {
+                        simpleService.getResultsResponse(listAdapter, 2021, "yes", "all");
+                        simpleService.getResultsResponse(listAdapter, 2002, "yes", "all");
+                        simpleService.getResultsResponse(listAdapter, 2014, "yes", "all");                    }
+                    catch (IOException e) {
+                        Log.d("IOException", "IOEXCEPTION");
+                    }
+                    pullToRefresh.setRefreshing(false);
+                }
+            });
+
+            String whereClause = "IS_FOLLOWED = ?";
             String[] whereArgs = new String[] {
-                    "SCHEDULED","IN_PLAY", "yes"
+                    "yes"
             };
-            cursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED"}, whereClause, whereArgs, null, null, null);
-            CursorAdapter listAdapter = new SimpleCursorAdapter(getActivity(),
+            cursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS",
+                    "LEAGUE_ID", "IS_FOLLOWED", "MATCH_DATE"}, whereClause, whereArgs, null, null, null);
+            listAdapter = new SimpleCursorAdapter(getActivity(),
                     R.layout.listview_schedule_row,
                     cursor,
                     //      new String[]{"TEAM_A", "TEAM_B"},
@@ -102,25 +100,28 @@ public class MyMatchesFragment extends Fragment {
                             @Override
                             public void onClick(View v) {
                                 //  use a tag to get the right position
-                                int position =  (int)v.getTag();
-                                cursor.moveToPosition(position);
-                                String isFollowed = cursor.getString(8);
-                                if(isFollowed.equals("no")) {
-                                    ContentValues contentValues= new ContentValues();
-                                    contentValues.put("IS_FOLLOWED","yes");
-                                    db.update("Result", contentValues,"_id = ?",new String[] {cursor.getString(0)});
-                                    ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), android.R.drawable.btn_star_big_on));
-                                }
-                                if(isFollowed.equals("yes")) {
-                                    ContentValues contentValues= new ContentValues();
-                                    contentValues.put("IS_FOLLOWED","no");
-                                    db.update("Result", contentValues,"_id = ?",new String[] {cursor.getString(0)});
-                                    ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), android.R.drawable.btn_star_big_off));
+                                if(!cursor.isClosed() && db.isOpen()) {
 
+                                    int position = (int) v.getTag();
+                                    cursor.moveToPosition(position);
+                                    String isFollowed = cursor.getString(8);
+                                    if (isFollowed.equals("no")) {
+                                        ContentValues contentValues = new ContentValues();
+                                        contentValues.put("IS_FOLLOWED", "yes");
+                                        db.update("Result", contentValues, "_id = ?", new String[]{cursor.getString(0)});
+                                        ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), android.R.drawable.btn_star_big_on));
+                                    }
+                                    if (isFollowed.equals("yes")) {
+                                        ContentValues contentValues = new ContentValues();
+                                        contentValues.put("IS_FOLLOWED", "no");
+                                        db.update("Result", contentValues, "_id = ?", new String[]{cursor.getString(0)});
+                                        ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), android.R.drawable.btn_star_big_off));
+
+                                    }
                                 }
 
                                 Cursor newCursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME",
-                                        "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED"}, whereClause, whereArgs, null, null, null);
+                                        "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED", "MATCH_DATE"}, whereClause, whereArgs, null, null, null);
 
 
                                 Thread thread = new Thread() {
@@ -156,7 +157,18 @@ public class MyMatchesFragment extends Fragment {
                 }
             });
 
+            try {
+                simpleService.getResultsResponse(listAdapter, 2021, "yes", "all");
+                simpleService.getResultsResponse(listAdapter, 2002, "yes", "all");
+                simpleService.getResultsResponse(listAdapter, 2014, "yes", "all");
+                simpleService.getResultsResponse(listAdapter, 2021, "no", "all");
+                simpleService.getResultsResponse(listAdapter, 2002, "no", "all");
+                simpleService.getResultsResponse(listAdapter, 2014, "no", "all");
 
+            }
+            catch (IOException e) {
+                Log.d("IOException", "IOEXCEPTION");
+            }
 
         }catch (SQLiteException e){
             Toast toast = Toast.makeText(inflater.getContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);

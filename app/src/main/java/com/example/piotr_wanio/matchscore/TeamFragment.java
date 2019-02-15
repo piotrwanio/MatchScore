@@ -54,18 +54,18 @@ public class TeamFragment extends Fragment {
 
         Bundle bundle = getArguments();
         int teamId = bundle.getInt("teamId", 0);
-
+        int leagueId = bundle.getInt("leagueId", 0);;
 
 
         try {
             if (db == null) {
-                matchScoreDatabaseHelper = new MatchScoreDatabaseHelper(getActivity());
+                matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(getActivity());
             }
             db = matchScoreDatabaseHelper.getReadableDatabase();
 
             SimpleService simpleService = new SimpleService(getActivity());
             try {
-                simpleService.getTeamsResponse(db, teamId, teamsLogo, teamName);
+                simpleService.getTeamsResponse(teamId, leagueId, teamsLogo, teamName);
             }
             catch (Exception e){
 
@@ -76,12 +76,13 @@ public class TeamFragment extends Fragment {
                     String.valueOf(teamId)
             };
 
-            cursor = db.query("Team", new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "ADDRESS", "WEBSITE"}, whereClause, whereArgs, null, null, null);
+            cursor = db.query("Team", new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "ADDRESS", "WEBSITE", "LEAGUE_ID"}, whereClause, whereArgs, null, null, null);
 
             cursor.moveToPosition(0);
             Context context = teamsLogo.getContext();
 
             if(cursor.getCount() > 0) {
+
                 String team = cursor.getString(3);
                 teamName.setText(cursor.getString(3));
                 String teamLogoUrl = cursor.getString(2);
@@ -111,10 +112,12 @@ public class TeamFragment extends Fragment {
             toast.show();
         }
 
+        int finalLeagueId = leagueId;
         scoresButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
-            args.putInt("leagueId", 2021);
-            Fragment fragment = new ResultsFragment();
+            args.putString("team", teamName.getText().toString());
+            args.putInt("leagueId", finalLeagueId);
+            Fragment fragment = new TeamResultFragment();
             fragment.setArguments(args);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.replace(R.id.contentTeamView, fragment, "visible_fragment");
@@ -125,8 +128,10 @@ public class TeamFragment extends Fragment {
 
         scheduleButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
-            args.putInt("leagueId", 2021);
-            Fragment fragment = new ScheduleFragment();
+            args.putString("team", teamName.getText().toString());
+            args.putInt("leagueId", finalLeagueId);
+
+            Fragment fragment = new TeamScheduleFragment();
             fragment.setArguments(args);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.replace(R.id.contentTeamView, fragment, "visible_fragment");

@@ -5,11 +5,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
+import android.util.Log;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
@@ -46,6 +49,7 @@ public final class SimpleService {
 
     private static StandingsResponse teamsList;
     private static SQLiteDatabase database;
+    private static MatchScoreDatabaseHelper matchScoreDatabaseHelper;
 
     private static Activity mActivity;
     private static CursorAdapter adapter;
@@ -53,11 +57,6 @@ public final class SimpleService {
 
     public SimpleService(Activity activity){
         this.mActivity = activity;
-    }
-
-    public interface API {
-        @GET("/teams")
-        Call<List<Team>> teams();
     }
 
     public interface StandingsService {
@@ -77,57 +76,246 @@ public final class SimpleService {
         @GET("v2/teams/{teamId}")
         Call<TeamsResponse> team(@Path("teamId") int teamId);
     }
-//    public interface LeagueResultsService {
-//        @Headers("X-Auth-Token: 23377c48baed4a65b9ac16a0499d62e9")
-//        @GET("v2/competitions/{leagueId}/matches")
-//        Call<StandingsResponse> leagueResults(@Path("leagueId") int leagueId);
-//    }
 
 
 
-    public static StandingsResponse getStandingsResponse(SQLiteDatabase db, CursorAdapter adapter,  final int leagueId) throws IOException {
-        database = db;
-        // Create a very simple REST adapter which points the GitHub API.
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(API_URL)
-                .callbackExecutor(Executors.newSingleThreadExecutor())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+    public static StandingsResponse getStandingsResponse(CursorAdapter adapter,  final int leagueId) throws IOException {
 
-        // Create an instance of our Standings API interface.
-        StandingsService standingsService = retrofit.create(StandingsService.class);
 
-        // Create a call instance for looking up Retrofit contributors.
-        Call<StandingsResponse> call = standingsService.standings(leagueId);
+            // Create a very simple REST adapter which points the AllSports API.
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(API_URL)
+                    .callbackExecutor(Executors.newSingleThreadExecutor())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
 
-        // Fetch and print a list of the contributors to the library.
+            // Create an instance of our Standings API interface.
+            StandingsService standingsService = retrofit.create(StandingsService.class);
 
-//        List<Team> teams = call.execute().body();
-//        for (Team team : teams) {
-//            System.out.println(team.name + " (" + team.points + ")");
-//        }
+            // Create a call instance for looking up standings.
+            Call<StandingsResponse> call = standingsService.standings(leagueId);
 
-        call.enqueue(new Callback<StandingsResponse>() {
-            @Override
-            public void onResponse(Call<StandingsResponse> call, Response<StandingsResponse> response) {
-                if(response.body() != null) {
-                    standingsResponse = response.body();
-                    responseApi = response;
-                    table = standingsResponse.getStandings().get(0).getTable();
-                    for (Table team : table) {
-                        System.out.println(team.getTeam().getName() + " (" + team.getPoints() + ")");
+
+            call.enqueue(new Callback<StandingsResponse>() {
+                @Override
+                public void onResponse(Call<StandingsResponse> call, Response<StandingsResponse> response) {
+                    try {
+                        matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(mActivity.getApplicationContext());
+                        database = matchScoreDatabaseHelper.getWritableDatabase();
+//                        database.enableWriteAheadLogging();
+
+
+                        if (response.body() != null && database.isOpen()) {
+                            standingsResponse = response.body();
+                            responseApi = response;
+                            table = standingsResponse.getStandings().get(0).getTable();
+                            for (Table team : table) {
+                                System.out.println(team.getTeam().getName() + " (" + team.getPoints() + ")");
+                            }
+                            updateStandings(database, standingsResponse, leagueId);
+                            String league = "";
+                            switch (leagueId)
+                            {
+                                case 2021:
+                                    league = "StandingsEngland";
+                                    break;
+                                case 2014:
+                                    league = "StandingsSpain";
+                                    break;
+                                case 2002:
+                                    league = "StandingsGermany";
+                            }
+                            Cursor cursor = database.query(league, new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "POINTS",
+                                    "GOALS_SCORED", "GOALS_LOOSED"}, null, null, null, null, "POINTS DESC");
+
+                            if (adapter != null) {
+                                Thread thread = new Thread() {
+                                    @Override
+                                    public void run() {
+                                        mActivity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                adapter.changeCursor(cursor);
+//                                                database.close();
+                                            }
+                                        });
+                                    }
+                                };
+                                thread.start();
+                            }
+                        }
+//                        if (database.isOpen()) database.close();
+
+
                     }
-                    updateStandings(database, standingsResponse, leagueId);
-                    Cursor cursor = db.query("StandingsGermany", new String[]{"_id", "IMAGE_RESOURCE","NAME", "POINTS", "GOALS_SCORED"}, null, null, null, null, null);
+                    catch (SQLiteException e){
 
-                    if(adapter != null) {
                         Thread thread = new Thread() {
                             @Override
                             public void run() {
                                 mActivity.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        adapter.changeCursor(cursor);
+                                        Toast toast = Toast.makeText(mActivity.getApplicationContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);
+                                        toast.show();
+                                    }
+                                });
+                            }
+                        };
+                        thread.start();
+
+
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<StandingsResponse> call, Throwable t) {
+                    if (t instanceof IOException) {
+                        System.out.println("Network trouble");
+                        System.out.println(t.getMessage());   // logging necessary
+                    } else {
+                        System.out.println("Enqueue fail...");
+                        System.out.println(t.getMessage());   // logging necessary
+                    }
+                }
+            });
+
+
+        return standingsResponse;
+
+    }
+
+    public static ResultsResponse getResultsResponse(CursorAdapter adapter, final int leagueId, String isFollowed, String scoreKind) throws IOException {
+
+        try {
+            matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(mActivity.getApplicationContext());
+            database = matchScoreDatabaseHelper.getWritableDatabase();
+
+            // Create a very simple REST adapter which points the AllSports API.
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(API_URL)
+                    .callbackExecutor(Executors.newSingleThreadExecutor())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            // Create an instance of our Results API interface.
+            ResultsService resultsService = retrofit.create(ResultsService.class);
+
+            // Create a call instance for looking up match results.
+            Call<ResultsResponse> call = resultsService.results(leagueId);
+
+            call.enqueue(new Callback<ResultsResponse>() {
+                @Override
+                public void onResponse(Call<ResultsResponse> call, Response<ResultsResponse> response) {
+                    if(response.body() != null) {
+                        resultsResponse = response.body();
+                        responseApi = response;
+                        matches = resultsResponse.getMatches();
+                        for (Match match : matches) {
+                            System.out.println(match.getHomeTeam().getName() + " (" + match.getScore().getFullTime().toString()+ ")");
+                        }
+                        if(database.isOpen()) {
+                            updateResults(database, resultsResponse, leagueId, isFollowed);
+                            String whereClause;
+                            String[] whereArgs;
+                            if(scoreKind.equals("schedule")) {
+                                whereClause = "(STATUS = ? OR STATUS = ? ) AND LEAGUE_ID = ?";
+                                whereArgs = new String[] {
+                                        "SCHEDULED","IN_PLAY", String.valueOf(leagueId)
+                                };
+                            }
+                            else if(scoreKind.equals("all")) {
+                                whereClause = "IS_FOLLOWED = ?";
+                                whereArgs = new String[] {
+                                        "yes"
+                                };
+                            }
+                            else {
+                                whereClause = "STATUS = ? AND LEAGUE_ID = ?";
+                                whereArgs = new String[] {
+                                        "FINISHED", String.valueOf(leagueId)
+                                };
+                            }
+
+                            Cursor cursor;
+                            if(database.isOpen()) {
+                                cursor = database.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM",
+                                        "STATUS", "LEAGUE_ID", "IS_FOLLOWED", "MATCH_DATE"}, whereClause, whereArgs, null, null, "LEAGUE_WEEK ASC");
+                                Thread thread = new Thread() {
+                                    @Override
+                                    public void run() {
+                                        mActivity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if(adapter!=null) {
+                                                    adapter.swapCursor(cursor);
+                                                    adapter.notifyDataSetChanged();
+//                                                    database.close();
+                                                }
+                                            }
+                                        });
+                                    }
+                                };
+                                thread.start();
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResultsResponse> call, Throwable t) {
+                    if (t instanceof IOException) {
+                        System.out.println("Network trouble");
+                        System.out.println(t.getMessage());   // logging necessary
+                    } else {
+                        System.out.println("Enqueue fail...");
+                        System.out.println(t.getMessage());   // logging necessary
+                    }
+                }
+            });
+        }
+        catch (SQLiteException e){
+            Toast toast = Toast.makeText(mActivity.getApplicationContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);
+
+            toast.show();
+        }
+        return resultsResponse;
+    }
+
+
+    public static TeamsResponse getTeamsResponse(final int teamId, int leagueId, ImageView teamsLogo, TextView teamsName) throws IOException {
+        try {
+            matchScoreDatabaseHelper = MatchScoreDatabaseHelper.getInstance(mActivity.getApplicationContext());
+            database = matchScoreDatabaseHelper.getReadableDatabase();
+            // Create a very simple REST adapter which points the AllSports API.
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(API_URL)
+                    .callbackExecutor(Executors.newSingleThreadExecutor())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            // Create an instance of our Teams API interface.
+            TeamsService teamsService = retrofit.create(TeamsService.class);
+
+            // Create a call instance for looking up team.
+            Call<TeamsResponse> call = teamsService.team(teamId);
+
+            call.enqueue(new Callback<TeamsResponse>() {
+                @Override
+                public void onResponse(Call<TeamsResponse> call, Response<TeamsResponse> response) {
+                    if(response.body() != null) {
+                        teamsResponse = response.body();
+                        responseApi = response;
+
+                        updateTeam(database, teamsResponse, teamId, leagueId);
+                        Thread thread = new Thread() {
+                            @Override
+                            public void run() {
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        updateTeamFragment(database, teamId);
+//                                        database.close();
                                     }
                                 });
                             }
@@ -135,164 +323,62 @@ public final class SimpleService {
                         thread.start();
                     }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<StandingsResponse> call, Throwable t) {
-                if (t instanceof IOException) {
-                    System.out.println("Network trouble");
-                    System.out.println(t.getMessage());   // logging necessary
-                } else {
-                    System.out.println("Enqueue fail...");
-                    System.out.println(t.getMessage());   // logging necessary
-                }
-            }
-        });
-        return standingsResponse;
-    }
-
-    public static ResultsResponse getResultsResponse(SQLiteDatabase db, final int leagueId) throws IOException {
-        database = db;
-        // Create a very simple REST adapter which points the GitHub API.
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(API_URL)
-                .callbackExecutor(Executors.newSingleThreadExecutor())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        // Create an instance of our Standings API interface.
-        ResultsService resultsService = retrofit.create(ResultsService.class);
-
-        // Create a call instance for looking up Retrofit contributors.
-        Call<ResultsResponse> call = resultsService.results(leagueId);
-
-        // Fetch and print a list of the contributors to the library.
-
-//        List<Team> teams = call.execute().body();
-//        for (Team team : teams) {
-//            System.out.println(team.name + " (" + team.points + ")");
-//        }
-
-        call.enqueue(new Callback<ResultsResponse>() {
-            @Override
-            public void onResponse(Call<ResultsResponse> call, Response<ResultsResponse> response) {
-                if(response.body() != null) {
-                    resultsResponse = response.body();
-                    responseApi = response;
-                    matches = resultsResponse.getMatches();
-                    for (Match match : matches) {
-                        System.out.println(match.getHomeTeam().getName() + " (" + match.getScore().getFullTime().toString()+ ")");
+                @Override
+                public void onFailure(Call<TeamsResponse> call, Throwable t) {
+                    if (t instanceof IOException) {
+                        System.out.println("Network trouble");
+                        System.out.println(t.getMessage());   // logging necessary
+                    } else {
+                        System.out.println("Enqueue fail...");
+                        System.out.println(t.getMessage());   // logging necessary
                     }
-                    updateResults(database, resultsResponse, leagueId, "no");
                 }
-            }
-
-            @Override
-            public void onFailure(Call<ResultsResponse> call, Throwable t) {
-                if (t instanceof IOException) {
-                    System.out.println("Network trouble");
-                    System.out.println(t.getMessage());   // logging necessary
-                } else {
-                    System.out.println("Enqueue fail...");
-                    System.out.println(t.getMessage());   // logging necessary
-                }
-            }
-        });
-        return resultsResponse;
-    }
-
-    public static TeamsResponse getTeamsResponse(SQLiteDatabase db, final int teamId, ImageView teamsLogo, TextView teamsName) throws IOException {
-        database = db;
-        // Create a very simple REST adapter which points the GitHub API.
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(API_URL)
-                .callbackExecutor(Executors.newSingleThreadExecutor())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        // Create an instance of our Standings API interface.
-        TeamsService teamsService = retrofit.create(TeamsService.class);
-
-        // Create a call instance for looking up Retrofit contributors.
-        Call<TeamsResponse> call = teamsService.team(teamId);
-
-        // Fetch and print a list of the contributors to the library.
-
-//        List<Team> teams = call.execute().body();
-//        for (Team team : teams) {
-//            System.out.println(team.name + " (" + team.points + ")");
-//        }
-
-        call.enqueue(new Callback<TeamsResponse>() {
-            @Override
-            public void onResponse(Call<TeamsResponse> call, Response<TeamsResponse> response) {
-                if(response.body() != null) {
-                    teamsResponse = response.body();
-                    responseApi = response;
-
-                    updateTeam(database, teamsResponse, teamId);
-                    Thread thread = new Thread() {
-                        @Override
-                        public void run() {
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateTeamFragment(db, teamId);
-                                }
-                            });
-                        }
-                    };
-                    thread.start();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<TeamsResponse> call, Throwable t) {
-                if (t instanceof IOException) {
-                    System.out.println("Network trouble");
-                    System.out.println(t.getMessage());   // logging necessary
-                } else {
-                    System.out.println("Enqueue fail...");
-                    System.out.println(t.getMessage());   // logging necessary
-                }
-            }
-        });
+            });
+        }
+        catch (SQLiteException e){
+            Toast toast = Toast.makeText(mActivity.getApplicationContext(), "Baza danych jest niedostępna! " +e.getMessage(), Toast.LENGTH_SHORT);
+            toast.show();
+        }
         return teamsResponse;
     }
 
-    public static void updateStandings(SQLiteDatabase db, StandingsResponse teamsList, int leagueId){
 
-        String league = "";
-        switch (leagueId)
-        {
-            case 2021:
-                league = "StandingsEngland";
-                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsEngland';");
-                break;
+    public static void updateStandings(SQLiteDatabase database, StandingsResponse teamsList, int leagueId){
 
-            case 2014:
-                league = "StandingsSpain";
-                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsSpain';");
-                break;
-            case 2002:
-                league = "StandingsGermany";
-                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsGermany';");
-        }
-        db.delete(league,"1",null);
+            String league = "";
+            switch (leagueId)
+            {
+                case 2021:
+                    league = "StandingsEngland";
+                    database.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsEngland';");
+                    break;
 
-        if(teamsList != null){
-            for (Table team : teamsList.getStandings().get(0).getTable()) {
-                insertTeam(db, team.getTeam().getId(), league, team.getTeam().getName(),"",(int)team.getPoints(),0,0,team.getTeam().getCrestUrl());
+                case 2014:
+                    league = "StandingsSpain";
+                    database.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsSpain';");
+                    break;
+                case 2002:
+                    league = "StandingsGermany";
+                    database.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='StandingsGermany';");
             }
-        }
+            database.delete(league,"1",null);
+
+            if(teamsList != null){
+                for (Table team : teamsList.getStandings().get(0).getTable()) {
+                    insertTeam(database, team.getTeam().getId(), league, team.getTeam().getName(),"",(int)team.getPoints(),team.getGoalsFor(),team.getGoalsAgainst(),team.getTeam().getCrestUrl());
+                }
+            }
     }
 
-    public static void updateTeam(SQLiteDatabase db, TeamsResponse teamsDetails, int teamId){
 
-      //  db.delete("Team","ID ="+teamsDetails.getId(),null);
+    public static void updateTeam(SQLiteDatabase db, TeamsResponse teamsDetails, int teamId, int leagueId){
+
 
         ContentValues teamValues = new ContentValues();
         teamValues.put("ID", teamsDetails.getId());
+        teamValues.put("LEAGUE_ID", leagueId);
+
         teamValues.put("NAME", teamsDetails.getName());
         teamValues.put("SHORTNAME", teamsDetails.getShortName());
         teamValues.put("ADDRESS", teamsDetails.getAddress());
@@ -315,25 +401,9 @@ public final class SimpleService {
     }
 
     public static void updateResults(SQLiteDatabase db, ResultsResponse resultsList, int leagueId, String isFollowed){
-//        String league = "";
-//        switch (leagueId)
-//        {
-//            case 2021:
-//                league = "ResultsEngland";
-//                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsEngland';");
-//                break;
-//            case 2002:
-//                league = "ResultsGermany";
-//                db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='ResultsGermany';");
-//        }
+
 
         db.execSQL("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='RESULT';");
-        String whereClause = "LEAGUE_ID = ? AND IS_FOLLOWED != ?";
-        String[] whereArgs = new String[] {
-                String.valueOf(leagueId), "yes"
-        };
-        db.delete("Result",whereClause,whereArgs);
-
         if(resultsList != null){
             for (Match match : resultsList.getMatches()) {
                 int homeGoals = 0;
@@ -342,17 +412,60 @@ public final class SimpleService {
                     homeGoals = match.getScore().getFullTime().getHomeTeam();
                     awayGoals = match.getScore().getFullTime().getAwayTeam();
                 }
-                insertResult(db, leagueId, match.getId(), match.getMatchday(), match.getStatus(), match.getUtcDate(), match.getLastUpdated(), isFollowed,
-                        match.getHomeTeam().getName(), match.getAwayTeam().getName(),homeGoals,
-                        awayGoals);
+
+                if(isFollowed.equals("yes")) {
+                    String whereClause = "LEAGUE_ID = ? AND IS_FOLLOWED = ? AND ID = ? ";
+                    String[] whereArgs = new String[]{
+                            String.valueOf(leagueId), isFollowed, match.getId().toString()
+                    };
+
+                    Cursor cursor = null;
+                    try {
+                        cursor = db.query("Result", new String[]{"_id", "ID", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME",
+                                "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED"}, whereClause, whereArgs, null, null, null);
+                        if(!cursor.isClosed()) cursor.moveToFirst();
+                        if (db.isOpen() && cursor.getCount() > 0) {
+                            db.delete("Result", whereClause, whereArgs);
+                            insertResult(db, leagueId, match.getId(), match.getMatchday(), match.getStatus(), match.getUtcDate(), match.getLastUpdated(), isFollowed,
+                                    match.getHomeTeam().getName(), match.getAwayTeam().getName(), homeGoals,
+                                    awayGoals);
+                        }
+                    }
+                    catch (Exception e){
+                        Log.d("błąd kursora", "błąd kursora" + e.getMessage());
+                    }
+                    finally {
+                        // this gets called even if there is an exception somewhere above
+                        if(cursor != null)
+                            cursor.close();
+                    }
+
+                }
+                else {
+                    String whereClause = "LEAGUE_ID = ? AND IS_FOLLOWED = ? AND ID = ? ";
+                    String[] whereArgs = new String[]{
+                            String.valueOf(leagueId), isFollowed, match.getId().toString()
+                    };
+
+                    if(db.isOpen()) {
+                        db.delete("Result", whereClause, whereArgs);
+                        insertResult(db, leagueId, match.getId(), match.getMatchday(), match.getStatus(), match.getUtcDate(), match.getLastUpdated(), isFollowed,
+                                match.getHomeTeam().getName(), match.getAwayTeam().getName(), homeGoals,
+                                awayGoals);
+                    }
+
+
+                }
             }
         }
     }
 
-    private static void insertTeam(SQLiteDatabase db, int id, String league,  String name, String shortname,
+
+    private static void insertTeam(SQLiteDatabase db, int id,  String league,  String name, String shortname,
                                    int points, int goalsScored, int goalsLoosed, String resource){
         ContentValues teamValues = new ContentValues();
         teamValues.put("ID", id);
+
         teamValues.put("NAME", name);
         teamValues.put("SHORTNAME", shortname);
         teamValues.put("POINTS", points);
@@ -360,7 +473,7 @@ public final class SimpleService {
         teamValues.put("GOALS_LOOSED", goalsLoosed);
 //        teamValues.put("IMAGE_RESOURCE", name.replaceAll(" ", "_").toLowerCase());
         teamValues.put("IMAGE_RESOURCE", resource);
-        db.insert(league, null, teamValues);
+        if(db.isOpen()) db.insert(league, null, teamValues);
     }
 
     private static void insertPlayer(SQLiteDatabase db, int id, int teamId,  String position, String nationality,
@@ -375,7 +488,7 @@ public final class SimpleService {
         playerValues.put("SHIRT_NUMBER", shirtNumber);
 //        teamValues.put("IMAGE_RESOURCE", name.replaceAll(" ", "_").toLowerCase());
         playerValues.put("BIRTH_DATE", birthDate);
-        db.insert("Player", null, playerValues);
+        if(db.isOpen()) db.insert("Player", null, playerValues);
     }
 
     private static void insertTeamDetails(SQLiteDatabase db, String league, String name, String shortname,
@@ -404,18 +517,36 @@ public final class SimpleService {
         teamValues.put("HOME_TEAM", teamHome);
         teamValues.put("AWAY_TEAM", teamAway);
 
-        teamValues.put("GOALS_HOME", goalsHome);
-        teamValues.put("GOALS_AWAY", goalsAway);
-
+        if(status.equals("SCHEDULED")) {
+            teamValues.put("GOALS_HOME", "-");
+            teamValues.put("GOALS_AWAY", "-");
+        }
+        else {
+            teamValues.put("GOALS_HOME", goalsHome);
+            teamValues.put("GOALS_AWAY", goalsAway);
+        }
         // check if apiID exist in database
         String whereClause = "(ID = ?)";
         String[] whereArgs = new String[] {
                 String.valueOf(apiMatchId)
         };
-        Cursor checkCursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED", "ID"}, whereClause, whereArgs, null, null, null);
 
-        if(checkCursor.getCount() == 0) {
-            db.insert("Result", null, teamValues);
+        Cursor checkCursor = null;
+        try {
+            checkCursor = db.query("Result", new String[]{"_id", "LEAGUE_WEEK", "HOME_TEAM", "GOALS_HOME", "GOALS_AWAY", "AWAY_TEAM", "STATUS", "LEAGUE_ID", "IS_FOLLOWED", "ID"}, whereClause, whereArgs, null, null, null);
+            checkCursor.moveToFirst();
+
+            if (db.isOpen() && checkCursor.getCount() == 0) {
+                if (db.isOpen()) db.insert("Result", null, teamValues);
+            }
+        }
+        catch (Exception e){
+            Log.d("błąd kursora", "błąd kursora" + e.getMessage());
+        }
+        finally {
+            // this gets called even if there is an exception somewhere above
+            if(checkCursor != null)
+                checkCursor.close();
         }
     }
 
@@ -433,33 +564,35 @@ public final class SimpleService {
 
         Cursor cursor = db.query("Team", new String[]{"_id", "ID", "IMAGE_RESOURCE", "NAME", "ADDRESS", "WEBSITE", "VENUE"}, whereClause, whereArgs, null, null, null);
 
-        cursor.moveToPosition(0);
-        Context context = teamsLogo.getContext();
+        if (teamsLogo != null) {
+            cursor.moveToPosition(0);
+            Context context = teamsLogo.getContext();
 
 
-        if (cursor.getCount() > 0) {
-            String team = cursor.getString(3);
-            teamName.setText(cursor.getString(3));
-            teamAddress.setText(cursor.getString(4));
-            teamWebsite.setText(cursor.getString(5));
-            teamStadium.setText(cursor.getString(6));
-            String teamLogoUrl = cursor.getString(2);
-            if (teamLogoUrl.contains(".cvg")) {
-                Uri uri = Uri.parse(teamLogoUrl);
+            if (cursor.getCount() > 0) {
+                String team = cursor.getString(3);
+                teamName.setText(cursor.getString(3));
+                teamAddress.setText(cursor.getString(4));
+                teamWebsite.setText(cursor.getString(5));
+                teamStadium.setText(cursor.getString(6));
+                String teamLogoUrl = cursor.getString(2);
+                if (teamLogoUrl.contains(".cvg")) {
+                    Uri uri = Uri.parse(teamLogoUrl);
 
-                RequestBuilder<PictureDrawable> requestBuilder;
-                requestBuilder = GlideApp.with(context)
-                        .as(PictureDrawable.class)
-                        .placeholder(R.drawable.arsenal_fc)
-                        .error(R.drawable.chelsea_fc)
-                        .listener(new SvgSoftwareLayerSetter());
+                    RequestBuilder<PictureDrawable> requestBuilder;
+                    requestBuilder = GlideApp.with(context)
+                            .as(PictureDrawable.class)
+                            .placeholder(R.drawable.arsenal_fc)
+                            .error(R.drawable.chelsea_fc)
+                            .listener(new SvgSoftwareLayerSetter());
 
 
-                requestBuilder.load(uri).into(teamsLogo);
-            } else {
-                Glide.with(context)
-                        .load(teamLogoUrl)
-                        .into(teamsLogo);
+                    requestBuilder.load(uri).into(teamsLogo);
+                } else {
+                    Glide.with(context)
+                            .load(teamLogoUrl)
+                            .into(teamsLogo);
+                }
             }
         }
     }

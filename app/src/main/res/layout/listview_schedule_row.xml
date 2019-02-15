@@ -36,7 +36,7 @@
 
         <TextView
             android:id="@+id/schedule_item_teamA"
-            android:layout_width="87dp"
+            android:layout_width="81dp"
             android:layout_height="51dp"
             android:layout_marginStart="0dp"
             android:padding="10dp"
@@ -58,7 +58,7 @@
             android:padding="10dp"
             android:paddingLeft="0dp"
             android:paddingTop="0dp"
-            android:text="1"
+            android:text="-"
             android:textAlignment="center"
             android:textSize="8sp"
             android:textStyle="bold"
@@ -85,7 +85,7 @@
             android:padding="10dp"
             android:paddingLeft="0dp"
             android:paddingTop="0dp"
-            android:text="1"
+            android:text="-"
             android:textAlignment="center"
             android:textSize="8sp"
             android:textStyle="bold"
@@ -94,7 +94,7 @@
 
         <TextView
             android:id="@+id/schedule_item_teamB"
-            android:layout_width="101dp"
+            android:layout_width="91dp"
             android:layout_height="51dp"
             android:layout_marginStart="0dp"
             android:layout_marginEnd="0dp"
@@ -111,8 +111,8 @@
 
         <ImageView
             android:id="@+id/followStar"
-            android:layout_width="37dp"
-            android:layout_height="37dp"
+            android:layout_width="31dp"
+            android:layout_height="match_parent"
             android:layout_marginStart="0dp"
             android:layout_marginTop="0dp"
             android:layout_marginEnd="0dp"
